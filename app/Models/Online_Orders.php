@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
-class Order extends Model
+class Online_Orders extends Model
 {
     protected $guarded = [];
     protected $table = 'orders';

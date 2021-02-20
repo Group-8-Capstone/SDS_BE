@@ -372,5 +372,10 @@ public function fetchDelivery(Request $request){
         return response()->json($e->getMessage());
       }
     }
+
+    //New
+    public function postOrders(Request $request){
+      
+    }
    
 }
