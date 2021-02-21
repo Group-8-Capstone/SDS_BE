@@ -161,6 +161,24 @@ class ProductController extends Controller
       return response()->json($e->getMessage());
     }
   }
+
+  public function saveProducts(Request $request){
+    try{ 
+        $data = $request->all();
+        $post = new Product;
+        $post->product_name = $data['product_name'];
+        $post->product_price = $data['product_price'];
+        $post->product_availability = $data['product_availability'];
+
+        $isExist = Product::where('product_name', '=', $data['product_name'])->first();
+        if ($isExist === null) {
+          $post->save();
+        }
+        return 'success';
+    } catch(Exception $e) {
+        return response()->json(['error: ' => $e->getMessage()]);
+    }
+  }
 }
 
 

@@ -40,11 +40,14 @@ Route::get('/fetchHalayaTubLanding',[ProductController::class,'fetchHalayaTub'])
 Route::get('/fetchHalayaJarLanding',[ProductController::class,'fetchHalayaJar']);
 
 
-Route::group(['middleware' => ['jwt.verify']], function () {
+//Route::group(['middleware' => ['jwt.verify']], function () {
     //Order Controller
     Route::post('/post/update', [OrderController::class, 'updateOrder']);
     Route::post('/post/createOrder', [OrderController::class, 'createOrder']);
     Route::get('/fetch/pending-orders', [OrderController::class, 'fetchPendingOrder']);
+
+    Route::post('/post/createWalkin', [OrderController::class, 'createWalkin']);
+
 
     Route::get('/posts/order', [OrderController::class, 'fetchOrder']);
     Route::get('/posts/delivered', [OrderController::class, 'fetchDelivered']);
@@ -129,4 +132,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     //Data Controller
     Route::get('closed', [DataConroller::class, 'closed']);
-});
+
+    //Order Controller
+    Route::post('/save-orders', [OrderController::class, 'postOrder']);
+    Route::post('/order-details', [OrderController::class, 'saveOrderDetails']);
+    // Route::get('/orders', [OrderController::class, 'fetchOrders']);
+
+    //Product Controller
+    Route::post('/save-products', [ProductController::class, 'saveProducts']);
+    Route::get('/fetchProduct', [OrderController::class, 'fetchProduct']);
+    Route::get('/postPrice', [OrderController::class, 'postPrice']);
+
+
+//});
+
+Route::get('/orders', [OrderController::class, 'fetchOrders']);
