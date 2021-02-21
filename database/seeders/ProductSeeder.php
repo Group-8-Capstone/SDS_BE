@@ -13,19 +13,19 @@ class ProductSeeder extends Seeder
      */
     public function run()
     {   
-        if(!Product::count()) {
-            $data = [
-                [
-                    'product_name'=>'Ube Halaya Tub',
-                    'product_price'=> 499
-                ],
-                [
-                    'product_name'=>'Ube Halaya Jar',
-                    'product_price'=> 150
-                ],
+        // if(!Product::count()) {
+        //     $data = [
+        //         [
+        //             'product_name'=>'Ube Halaya Tub',
+        //             'product_price'=> 499
+        //         ],
+        //         [
+        //             'product_name'=>'Ube Halaya Jar',
+        //             'product_price'=> 150
+        //         ],
         
-            ];
-            Product::insert($data);
-        }
+        //     ];
+        //     Product::insert($data);
+        // }
     }
 }
