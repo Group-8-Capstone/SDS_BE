@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Order;
+use App\Models\Online_Orders;
 use App\Models\DeleveredOrder;
 
 
@@ -15,7 +15,7 @@ class SalesController extends Controller
             $Date = date("Y-m-d"); //current date
             $year = $request->all();
 
-            $Delivered = Order::select(\DB::raw("sum(ubehalayajar_qty)as total"), 'preferred_delivery_date')
+            $Delivered = Online_Orders::select(\DB::raw("sum(ubehalayajar_qty)as total"), 'preferred_delivery_date')
             ->where([
                 ['order_status', '=','Delivered'],
                 [\DB::raw("EXTRACT(YEAR FROM preferred_delivery_date)"), '=', $year['year']],
@@ -37,7 +37,7 @@ class SalesController extends Controller
         try{
         $Date = date("Y-m-d"); //current date
         $year = $request->all();
-        $Delivered = Order::select(\DB::raw("sum(ubehalayatub_qty)as total"), 'preferred_delivery_date')
+        $Delivered = Online_Orders::select(\DB::raw("sum(ubehalayatub_qty)as total"), 'preferred_delivery_date')
         ->where([
             ['order_status', '=','Delivered'],
             [\DB::raw("EXTRACT(YEAR FROM preferred_delivery_date)"), '=', $year['year']],
@@ -58,7 +58,7 @@ class SalesController extends Controller
 
         /**Getting the first delivery of the year */
 
-        $firstDelivery = Order::select('preferred_delivery_date')
+        $firstDelivery = Online_Orders::select('preferred_delivery_date')
         ->where([
             [\DB::raw('EXTRACT(YEAR FROM preferred_delivery_date)'), '=', $request['year']]
             ])
@@ -70,9 +70,9 @@ class SalesController extends Controller
         $weekArray = $this->getStartAndEndWeek($weekNumber,$currentYear);
         $weeklyData =[];
         for($i = 0; $i < sizeof($weekArray); $i++){
-            \Log::info('Order::select sum(ubehalayajar_qty)->where([[preferred_delivery_date, >=, ' . $weekArray[$i]['start'] . ' ], [preferred_delivery_date, <=, '. $weekArray[$i]['end'] .' ])');
+            \Log::info('Online_Orders::select sum(ubehalayajar_qty)->where([[preferred_delivery_date, >=, ' . $weekArray[$i]['start'] . ' ], [preferred_delivery_date, <=, '. $weekArray[$i]['end'] .' ])');
 
-            $getWeeklySales =Order::select(\DB::raw("sum(orders.ubehalayajar_qty) as totals"))
+            $getWeeklySales =Online_Orders::select(\DB::raw("sum(orders.ubehalayajar_qty) as totals"))
             ->where([
                 ["preferred_delivery_date", ">=", $weekArray[$i]['start']],
                 ["preferred_delivery_date", "<=", $weekArray[$i]['end']],
@@ -95,7 +95,7 @@ class SalesController extends Controller
 
         /**Getting the first delivery of the year */
 
-        $firstDelivery = Order::select('preferred_delivery_date')
+        $firstDelivery = Online_Orders::select('preferred_delivery_date')
         ->where(\DB::raw('EXTRACT(YEAR FROM preferred_delivery_date)'), '=', $request['year'])
         ->first();
 
@@ -105,9 +105,9 @@ class SalesController extends Controller
         $weekArray = $this->getStartAndEndWeek($weekNumber,$currentYear);
         $weeklyData =[];
         for($i = 0; $i < sizeof($weekArray); $i++){
-            \Log::info('Order::select sum(ubehalayatub_qty)->where([[preferred_delivery_date, >=, ' . $weekArray[$i]['start'] . ' ], [preferred_delivery_date, <=, '. $weekArray[$i]['end'] .' ])');
+            \Log::info('Online_Orders::select sum(ubehalayatub_qty)->where([[preferred_delivery_date, >=, ' . $weekArray[$i]['start'] . ' ], [preferred_delivery_date, <=, '. $weekArray[$i]['end'] .' ])');
 
-            $getWeeklySales =Order::select(\DB::raw("sum(orders.ubehalayatub_qty) as totals"))
+            $getWeeklySales =Online_Orders::select(\DB::raw("sum(orders.ubehalayatub_qty) as totals"))
             ->where([
                 ["preferred_delivery_date", ">=", $weekArray[$i]['start']],
                 ["preferred_delivery_date", "<=", $weekArray[$i]['end']],
@@ -149,7 +149,7 @@ class SalesController extends Controller
         try{
         $year = $request->all();
         $date = date("Y-m-d");
-        $monthlySales = Order::select(\DB::raw("sum(orders.ubehalayajar_qty) as totals")
+        $monthlySales = Online_Orders::select(\DB::raw("sum(orders.ubehalayajar_qty) as totals")
         , \DB::raw("EXTRACT(MONTH FROM preferred_delivery_date) as months"))
         ->where([
             ["order_status","=","Delivered"],
@@ -168,7 +168,7 @@ class SalesController extends Controller
         try{
         $year = $request->all();
         $date = date("Y-m-d");
-        $monthlySales = Order::select(\DB::raw("sum(ubehalayatub_qty) as totals")
+        $monthlySales = Online_Orders::select(\DB::raw("sum(ubehalayatub_qty) as totals")
         , \DB::raw("EXTRACT(MONTH FROM preferred_delivery_date) as months"))
         ->where([
             ["order_status","=","Delivered"],
@@ -186,7 +186,7 @@ class SalesController extends Controller
     public function indexYearly(Request $request){
         try{
             $date = date("Y-m-d");
-            $yearlySales = Order::select(\DB::raw("sum(ubehalayajar_qty) as totals"),
+            $yearlySales = Online_Orders::select(\DB::raw("sum(ubehalayajar_qty) as totals"),
             \DB::raw("EXTRACT(YEAR FROM preferred_delivery_date) as years"))
             ->where([
                 ["order_status", "=", "Delivered"],
@@ -202,7 +202,7 @@ class SalesController extends Controller
     public function indexYearlyTub(Request $request){
         try{
         $date = date("Y-m-d");
-        $yearlySales = Order::select(\DB::raw("sum(ubehalayatub_qty) as totals"),
+        $yearlySales = Online_Orders::select(\DB::raw("sum(ubehalayatub_qty) as totals"),
         \DB::raw("EXTRACT(YEAR FROM preferred_delivery_date) as years"))
         ->where([
             ["order_status", "=", "Delivered"],
@@ -217,7 +217,7 @@ class SalesController extends Controller
     }
     public function selectYear(Request $request){
         try{
-        $selectingYear = Order::select(\DB::raw('EXTRACT(YEAR FROM preferred_delivery_date) as years'))
+        $selectingYear = Online_Orders::select(\DB::raw('EXTRACT(YEAR FROM preferred_delivery_date) as years'))
         ->groupBy('years')
         ->get();
         }catch(\Exception $e){
