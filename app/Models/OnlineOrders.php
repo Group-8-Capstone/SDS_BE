@@ -9,6 +9,7 @@ class OnlineOrders extends Model
 {
     protected $guarded = [];
     protected $table = 'online_orders';
+    protected $primaryKey = 'order_id';
     protected $fillable = [
         'order_id',
         'receiver_name',
@@ -28,4 +29,10 @@ class OnlineOrders extends Model
         // 'latitude',
         // 'longitude'
     ];
+
+    public function products() {
+        return $this->belongsToMany(Product::class, 'order_details', 'order_id', 'product_id')
+        ->withTimestamps()
+        ->withPivot('order_quantity');
+    }
 }

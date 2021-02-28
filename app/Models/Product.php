@@ -14,4 +14,8 @@ class Product extends Model
     protected $fillable = [
         'product_name', 'product_price','product_availability'
     ];
+
+    public function orders(){
+        return $this->belongsToMany(OnlineOrders::class, 'order_details', 'order_id', 'product_id');
+    }
 }
