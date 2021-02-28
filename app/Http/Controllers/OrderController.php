@@ -91,26 +91,22 @@ class OrderController extends Controller
     public function createOrder(Request $request)
     {
       try{
-        $post = new Order;
+        $post = new OnlineOrders;
         $data = $request->all();
-        $post->customer_id = $data['customer_id'];
         $post->receiver_name = $data['receiver_name'];
-        $post->building_or_street = $data['building_street'];
+        $post->order_id = $data['order_id'];
+        $post->building_or_street = $data['landmark'];
+        $post->landmark = $data['landmark'];
         $post->barangay = $data['barangay'];
         $post->city_or_municipality = $data['city_municipality'];
         $post->province = $data['province'];
+        $post->email = $data['email'];
         $post->contact_number = $data['contactNumber'];
-        $post->ubehalayajar_qty = $data['jar_qty']; 
-        $post->ubehalayatub_qty = $data['tub_qty']; 
         $post->total_payment = $data['total_payment'];
+        $post->payment_method = $data['payment_method'];
+        $post->payment_status = $data['payment_status'];
         $post->preferred_delivery_date = $data['deliveryDate'];
-        $post->order_status = $data['orderStatus'];
-        $post->mark_status = 'Unread';
-        $post->mark_adminstatus = 'Unread';
-        $post->distance = $data['distance'];
-        $post->longitude = $data['longitude'];
-        $post->latitude = $data['latitude'];
-        $post->postcode = $data['postcode'];
+        $post->order_status = $data['order_status'];
         $post->save();
         event(new OrderEvent($post));
         return 'success';
