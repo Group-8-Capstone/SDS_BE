@@ -113,29 +113,79 @@ class OrderController extends Controller
     public function createOrder(Request $request)
     {
       try{
-        $post = new OnlineOrders;
-        $data = $request->all();
+      $data = $request->all();
+      
+      $post = new OnlineOrders;
+      foreach($data['order_items'] as $key) {
+
+      $price = DB::table('products')
+        ->select('product_price')
+        ->where('product_name',$key['product_name'])
+        ->value('product_price');
+      $total = (int)$price*(int)$key['product_quantity'];
+
+      if(OnlineOrders::where('order_id',$data['order_id'] )->exists()){
+        
+        $randomId  =   rand(2,5000);
+        $post->order_id = $randomId;
         $post->receiver_name = $data['receiver_name'];
-        $post->order_id = $data['order_id'];
+        $post->email = $data['email'];
+        $post->order_status = $data['order_status'];
         $post->building_or_street = $data['landmark'];
-        $post->landmark = $data['landmark'];
         $post->barangay = $data['barangay'];
         $post->city_or_municipality = $data['city_municipality'];
         $post->province = $data['province'];
-        $post->email = $data['email'];
-        $post->contact_number = $data['contactNumber'];
-        $post->total_payment = $data['total_payment'];
+        $post->contact_number = $data['contactNumber']; 
+        $post->total_payment = $total;
+        $post->preferred_delivery_date = $data['deliveryDate'];
+        $post->landmark = $data['landmark'];
         $post->payment_method = $data['payment_method'];
         $post->payment_status = $data['payment_status'];
-        $post->preferred_delivery_date = $data['deliveryDate'];
-        $post->order_status = $data['order_status'];
         $post->save();
-        event(new OrderEvent($post));
-        return 'success';
-      } catch (\Exception $e){
-        event(new OrderEvent('good'));
-        return response()->json(['error'=>$e->getMessage()]);
+
+        $productID = DB::table('products')
+        ->where('product_name', $key['product_name'])
+        ->value('id');
+
+        $customerID = DB::table('online_orders')
+        ->where('order_id', $data['order_id'])
+        ->value('id');
+
+        $order = OnlineOrders::find($data['order_id']);
+        $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$key['product_quantity']]]);
+       } else {
+        $post->order_id = $data['order_id'];
+        $post->receiver_name = $data['receiver_name'];
+        $post->email = $data['email'];
+        $post->order_status = $data['order_status'];
+        $post->building_or_street = $data['landmark'];
+        $post->barangay = $data['barangay'];
+        $post->city_or_municipality = $data['city_municipality'];
+        $post->province = $data['province'];
+        $post->contact_number = $data['contactNumber']; 
+        $post->total_payment = $total;
+        $post->preferred_delivery_date = $data['deliveryDate'];
+        $post->landmark = $data['landmark'];
+        $post->payment_method = $data['payment_method'];
+        $post->payment_status = $data['payment_status'];
+        $post->save();
+
+        $productID = DB::table('products')
+        ->where('product_name', $key['product_name'])
+        ->value('id');
+
+        $customerID = DB::table('online_orders')
+        ->where('order_id', $data['order_id'])
+        ->value('id');
+
+        $order = OnlineOrders::find($data['order_id']);
+        $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$key['product_quantity']]]);
+       }
       }
+      return 'success';
+    } catch (\Exception $e){
+      return response()->json(['error'=>$e->getMessage()]);
+    }
     }
   
    public function fetchOrder()
