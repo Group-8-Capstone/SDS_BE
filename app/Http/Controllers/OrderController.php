@@ -24,16 +24,19 @@ class OrderController extends Controller
   {
     try{
       $data = $request->all();
+      
+      $post = new OnlineOrders;
+      foreach($data['order_items'] as $key) {
+
       $price = DB::table('products')
         ->select('product_price')
-        ->where('product_name',$data['product_name'])
+        ->where('product_name',$key['product_name'])
         ->value('product_price');
-      $total = (int)$price*(int)$data['product_quantity'];
+      $total = (int)$price*(int)$key['product_quantity'];
 
       if(OnlineOrders::where('order_id',$data['order_id'] )->exists()){
         
         $randomId  =   rand(2,5000);
-        $post = new OnlineOrders;
         $post->order_id = $randomId;
         $post->receiver_name = $data['receiver_name'];
         $post->email = $data['email'];
@@ -49,8 +52,18 @@ class OrderController extends Controller
         $post->payment_method = $data['payment_method'];
         $post->payment_status = $data['payment_status'];
         $post->save();
-       }else{
-        $post = new OnlineOrders;
+
+        $productID = DB::table('products')
+        ->where('product_name', $key['product_name'])
+        ->value('id');
+
+        $customerID = DB::table('online_orders')
+        ->where('order_id', $data['order_id'])
+        ->value('id');
+
+        $order = OnlineOrders::find($data['order_id']);
+        $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$key['product_quantity']]]);
+       } else {
         $post->order_id = $data['order_id'];
         $post->receiver_name = $data['receiver_name'];
         $post->email = $data['email'];
@@ -66,12 +79,21 @@ class OrderController extends Controller
         $post->payment_method = $data['payment_method'];
         $post->payment_status = $data['payment_status'];
         $post->save();
+
+        $productID = DB::table('products')
+        ->where('product_name', $key['product_name'])
+        ->value('id');
+
+        $customerID = DB::table('online_orders')
+        ->where('order_id', $data['order_id'])
+        ->value('id');
+
+        $order = OnlineOrders::find($data['order_id']);
+        $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$key['product_quantity']]]);
        }
-    
-      //event(new OrderEvent($post));
+      }
       return 'success';
     } catch (\Exception $e){
-      //event(new OrderEvent('good'));
       return response()->json(['error'=>$e->getMessage()]);
     }
   }
@@ -144,19 +166,6 @@ class OrderController extends Controller
     public function fetchDelivered()
     {
       try {
-        // return new OrderCollection(Order::where('order_status', 'Delivered')
-        // ->orderBy('preferred_delivery_date', 'desc')
-        // ->get());
-      //  $data = DB::table('online_orders')
-      //   ->select('receiver_name', 'building_or_street', 
-      //     'barangay','city_or_municipality', 'province', 
-      //     'contact_number','distance','preferred_delivery_date',
-      //     'ubehalayajar_qty','ubehalayatub_qty', 'total_payment',
-      //     'order_status' )
-      //     ->where("order_status", "=", "Delivered")
-      //     ->get();
-      //     return response()->json(compact('data'));
-
       $order_products = array();
       $data = DB::table('online_orders')
       ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
@@ -171,10 +180,8 @@ class OrderController extends Controller
         ->where('id', $key->product_id)
         ->get();
 
-        // $order_details = (array) $order_details;
         $arr = (array)$key;
 
-        // $order_details['order_quantity'] = $key->order_quantity;
         $arr['line_items'] = $order_details;
         $order_products[] = $arr;
       }
@@ -235,7 +242,6 @@ public function fetchDelivery(Request $request){
       ->orWhere('online_orders.order_status', 'Canceled')
       ->orWhere('online_orders.order_status', 'Delivered');
     })
-    ->orderBy('online_orders.distance', 'asc')
     ->get();
     
     $arr = array();
@@ -245,59 +251,17 @@ public function fetchDelivery(Request $request){
       ->where('id', $key->product_id)
       ->get();
 
-      // $order_details = (array) $order_details;
       $arr = (array)$key;
 
-      // $order_details['order_quantity'] = $key->order_quantity;
       $arr['line_items'] = $order_details;
       $order_products[] = $arr;
     }
     return $order_products;
-    // $order_products = array();
-    // $data = OnlineOrders::where('preferred_delivery_date', Carbon::today()->toDateString())
-    // ->where( function($query) {
-    //   $query->where('order_status', 'On order')
-    //   ->orWhere('order_status', 'Canceled')
-    //   ->orWhere('order_status', 'Delivered');
-    // })
-    // ->orderBy('distance', 'asc')
-    // ->get();
-
-    // $arr = array();
-    //   foreach($data as $key){
-    //     $order_details = DB::table('products')
-    //     ->select('*')
-    //     ->where('id', $key->product_id)
-    //     ->get();
-
-    //     // $order_details = (array) $order_details;
-    //     $arr = (array)$key;
-
-    //     // $order_details['order_quantity'] = $key->order_quantity;
-    //     $arr['line_items'] = $order_details;
-    //     $order_products[] = $arr;
-    //   }
-    //   return $order_products;
   } catch (\Exception $e){
     return response()->json(['error'=>$e->getMessage()]);
   }
 }
 
-// public function fetchDeliveries(Request $request){
-//   try {
-//     $data = Order::select('receiver_name','customer_address','contact_number','distance','preferred_delivery_date','ubehalayajar_qty','ubehalayatub_qty','total_item','total_payment','order_status')->where('preferred_delivery_date', Carbon::today()->toDateString())
-//     ->orWhere( function($query) {
-//       $query->where('order_status', 'On order')
-//       ->orWhere('order_status', 'Canceled')
-//       ->orWhere('order_status', 'Delivered');
-//     })
-//     ->orderBy('distance', 'asc')
-//     ->get();
-//     return response()->json(compact('data'));
-//   } catch (\Exception $e){
-//     return response()->json(['error'=>$e->getMessage()]);
-//   }
-// }
 
     public function updateCancelledStatus(Request $request, $id)
     {
@@ -336,9 +300,7 @@ public function fetchDelivery(Request $request){
         $post->city_or_municipality = $request['city_or_municipality'];
         $post->province = $request['province'];
         $post->preferred_delivery_date = $request['preferred_delivery_date'];
-        // $post->ubehalayajar_qty = $request['ubehalayajar_qty'];
-        // $post->ubehalayatub_qty = $request['ubehalayatub_qty'];
-        $post->distance = $request['distance'];
+        // $post->distance = $request['distance'];
         $post->save();
         return response()->json(compact('post'));
        } catch (\Exception $e){
@@ -512,27 +474,6 @@ public function fetchDelivery(Request $request){
     public function postOrder(Request $request){
       try {
         $data = $request->all();
-        // return $data;
-        // $order_id = 0;
-        // foreach($data as $index) {
-        //   $customerDetails = (array)$index['billing'];
-        //   // $meta_data = (array)$index['meta_data'];
-
-        //   $order_id = $index['id'];
-        //   $name = $customerDetails['first_name']." ".$customerDetails['last_name'];
-        //   $contact_number = $customerDetails['phone'];
-        //   $email = $customerDetails['email'];
-        //   $building_or_street = $customerDetails['address_2'];
-        //   $barangay =  $customerDetails['address_1'];
-        //   $city_or_municipality =  $customerDetails['city'];
-        //   $province =  $customerDetails['postcode'];
-        //   $total_payment = $index['total'];
-        //   $preferred_delivery_date = $index['preferred_delivery_date'];
-        //   $order_status = "On order";
-        //   $landmark = $customerDetails['company'];
-        //   $payment_method = $index['payment_method'];
-        //   $payment_status = $index['status'];
-
           $post = new OnlineOrders;
           $post->receiver_name = $data['receiver_name'];
           $post->order_id = $data['order_id'];
@@ -553,8 +494,8 @@ public function fetchDelivery(Request $request){
           if ($isExist === null) {
             $post->save();
           }
+
           return 'success';
-        // }
       } catch (Exception $e){
         return response()->json(['error: ' => $e->getMessage()]);
       }
@@ -563,56 +504,26 @@ public function fetchDelivery(Request $request){
     public function saveOrderDetails(Request $request){
       try {
         $data = $request->all();
-        // foreach($data as $index) {
-        //   $order_items = (array) $index['line_items'];
-        //   foreach($order_items as $order){
-        //     $name = $order['name'];
 
-            $productID = DB::table('products')
-            ->where('product_name', $data['product_name'])
-            ->value('id');
+          $productID = DB::table('products')
+          ->where('product_name', $data['product_name'])
+          ->value('id');
 
-            $customerID = DB::table('online_orders')
-            ->where('order_id', $data['order_id'])
-            ->value('id');
-            
-            $post = new OrderDetailsModel;
-            $post->order_id = $data['order_id'];
-            $post->customer_id = $customerID;
-            $post->product_id = $productID;
-            $post->order_quantity = $data['order_quantity'];
+          $customerID = DB::table('online_orders')
+          ->where('order_id', $data['order_id'])
+          ->value('id');
 
-            $orderIDExist = OrderDetailsModel::where('order_id', '=', $data['order_id'])->first();
-            $productIDExist = OrderDetailsModel::where('product_id', '=', $productID)->first();
-            if ($orderIDExist === null && $productIDExist === null) {
-              $post->save();
-            }
-            return 'success';
-          // }
-        // }
+          $order = OnlineOrders::find($data['order_id']);
+          $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$data['order_quantity']]]);
+
+          return 'success';
       } catch(Exception $e) {
         return response()->json(['error: ' => $e->getMessage()]);
       }
     }
 
     public function fetchOrders(){
-      $order_products = array();
-      $data = DB::table('online_orders')
-      ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
-      ->select('online_orders.*', 'order_details.*')
-      ->get();
-      $arr = array();
-      foreach($data as $key){
-        $order_details = DB::table('products')
-        ->select('*')
-        ->where('id', $key->product_id)
-        ->get();
-
-        $arr = (array)$key;
-        $arr['line_items'] = $order_details;
-        $order_products[] = $arr;
-      }
-      return $order_products;
+      return OnlineOrders::with('products')->get();
     }
    
 }
