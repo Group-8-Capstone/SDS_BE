@@ -216,26 +216,27 @@ class OrderController extends Controller
     public function fetchDelivered()
     {
       try {
-      $order_products = array();
-      $data = DB::table('online_orders')
-      ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
-      ->select('online_orders.*', 'order_details.*')
-      ->where("order_status", "=", "Delivered")
-      ->get();
+      // $order_products = array();
+      // $data = DB::table('online_orders')
+      // ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
+      // ->select('online_orders.*', 'order_details.*')
+      // ->where("order_status", "=", "Delivered")
+      // ->get();
       
-      $arr = array();
-      foreach($data as $key){
-        $order_details = DB::table('products')
-        ->select('*')
-        ->where('id', $key->product_id)
-        ->get();
+      // $arr = array();
+      // foreach($data as $key){
+      //   $order_details = DB::table('products')
+      //   ->select('*')
+      //   ->where('id', $key->product_id)
+      //   ->get();
 
-        $arr = (array)$key;
+      //   $arr = (array)$key;
 
-        $arr['line_items'] = $order_details;
-        $order_products[] = $arr;
-      }
-      return $order_products;
+      //   $arr['line_items'] = $order_details;
+      //   $order_products[] = $arr;
+      // }
+      // return $order_products;
+      return OnlineOrders::with('products')->where('order_status', '=', 'Delivered')->get();
       } catch (\Exception $e) {
         return response()->json(['error'=>$e->getMessage()]);
       }
@@ -280,48 +281,63 @@ class OrderController extends Controller
     }
 }
 
-public function fetchDelivery(Request $request){
-  try {
-    $order_products = array();
-    // $data = DB::table('online_orders')
-    //   ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
-    //   ->get();
-    //   foreach($data as $key){
-    //     $date = Carbon::parse($key->preferred_delivery_date)->format('Y-m-d');
-        // $data->select('online_orders.*', 'order_details.*')
-        //   ->where($date, Carbon::today()->toDateString())
-        //   ->where( function($query) {
-        //     $query->where('online_orders.order_status', 'On order')
-        //     ->orWhere('online_orders.order_status', 'Canceled')
-        //     ->orWhere('online_orders.order_status', 'Delivered');
-        //   })
-        //   ->get(['preferred_delivery_date']);
-      // }
+// public function fetchDelivery(Request $request){
+//   try {
+//     // $order_products = array();
+//     // $data = DB::table('online_orders')
+//     //   ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
+//     //   ->get();
+//     //   foreach($data as $key){
+//     //     $date = Carbon::parse($key->preferred_delivery_date)->format('Y-m-d');
+//         // $data->select('online_orders.*', 'order_details.*')
+//         //   ->where($date, Carbon::today()->toDateString())
+//         //   ->where( function($query) {
+//         //     $query->where('online_orders.order_status', 'On order')
+//         //     ->orWhere('online_orders.order_status', 'Canceled')
+//         //     ->orWhere('online_orders.order_status', 'Delivered');
+//         //   })
+//         //   ->get(['preferred_delivery_date']);
+//       // }
     
 
-    $data = DB::table('online_orders')
-    ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
-    ->select('online_orders.*', 'order_details.*')
-    ->where('online_orders.preferred_delivery_date', Carbon::today()->toDateString())
-    ->where( function($query) {
-      $query->where('online_orders.order_status', 'On order')
-      ->orWhere('online_orders.order_status', 'Canceled')
-      ->orWhere('online_orders.order_status', 'Delivered');
-    })
-    ->get(['preferred_delivery_date']);
-    $arr = array();
-    foreach($data as $key){
-      $order_details = DB::table('products')
-      ->select('*')
-      ->where('id', $key->product_id)
-      ->get();
+//     // $data = DB::table('online_orders')
+//     // ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
+//     // ->select('online_orders.*', 'order_details.*')
+//     // ->where('online_orders.preferred_delivery_date', Carbon::today()->toDateString())
+//     // ->where( function($query) {
+//     //   $query->where('online_orders.order_status', 'On order')
+//     //   ->orWhere('online_orders.order_status', 'Canceled')
+//     //   ->orWhere('online_orders.order_status', 'Delivered');
+//     // })
+//     // ->get(['preferred_delivery_date']);
+//     // $arr = array();
+//     // foreach($data as $key){
+//     //   $order_details = DB::table('products')
+//     //   ->select('*')
+//     //   ->where('id', $key->product_id)
+//     //   ->get();
 
-      $arr = (array)$key;
+//     //   $arr = (array)$key;
 
-      $arr['line_items'] = $order_details;
-      $order_products[] = $arr;
-    }
-    return $order_products;
+//     //   $arr['line_items'] = $order_details;
+//     //   $order_products[] = $arr;
+//     // }
+//     // return $order_products;
+//     return OnlineOrders::->with('products')->get();
+
+
+//   } catch (\Exception $e){
+//     return response()->json(['error'=>$e->getMessage()]);
+//   }
+// }
+
+public function fetchDelivery(Request $request){
+  try {
+    // return OnlineOrders::select(
+    //   'receiver_name', 'contact_number', 'email', 
+    // )
+    // ->with('products')->get();
+    return OnlineOrders::with('products')->get();
   } catch (\Exception $e){
     return response()->json(['error'=>$e->getMessage()]);
   }
@@ -378,7 +394,7 @@ public function fetchDelivery(Request $request){
     {
       try {
         $newItem =  $request->all();
-        $post = Order::firstOrCreate(['id' => $id]);
+        $post = OnlineOrders::firstOrCreate(['id' => $id]);
         $post->order_status = 'Delivered';
         $post->save();
         event(new OrderEvent($post));
@@ -518,17 +534,21 @@ public function fetchDelivery(Request $request){
 
     public function filter(Request $request,$month,$year){
       try{
-        $data = DB::table('orders')
-        ->select('receiver_name', 'building_or_street', 
-          'barangay','city_or_municipality', 'province', 
-          'contact_number','distance','preferred_delivery_date',
-          'ubehalayajar_qty','ubehalayatub_qty', 'total_payment',
-          'order_status' )
-          ->whereMonth("created_at", (int)$month)
-          ->whereYear("created_at", (int)$year)
+        return OnlineOrders::with('products')
+        ->whereMonth("updated_at", (int)$month)
+          ->whereYear("updated_at", (int)$year)
           ->where("order_status", "=", "Delivered")
           ->get();
-          return response()->json(compact('data'));
+        // $data = DB::table('online_orders')
+        // ->select('receiver_name', 'building_or_street', 
+        //   'barangay','city_or_municipality', 'province', 
+        //   'contact_number','distance','preferred_delivery_date',
+        //   'total_payment','order_status' )
+        //   ->whereMonth("created_at", (int)$month)
+        //   ->whereYear("created_at", (int)$year)
+        //   ->where("order_status", "=", "Delivered")
+        //   ->get();
+        //   return response()->json(compact('data'));
       } catch (Exception $e){
         return response()->json($e->getMessage());
       }
@@ -539,7 +559,7 @@ public function fetchDelivery(Request $request){
     public function postOrder(Request $request){
       try {
         $data = $request->all();
-        
+
           $date = Carbon::parse($data['preferred_delivery_date'])->format('Y-m-d');
           $post = new OnlineOrders;
           $post->receiver_name = $data['receiver_name'];
