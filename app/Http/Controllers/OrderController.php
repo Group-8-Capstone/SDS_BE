@@ -283,6 +283,22 @@ class OrderController extends Controller
 public function fetchDelivery(Request $request){
   try {
     $order_products = array();
+    // $data = DB::table('online_orders')
+    //   ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
+    //   ->get();
+    //   foreach($data as $key){
+    //     $date = Carbon::parse($key->preferred_delivery_date)->format('Y-m-d');
+        // $data->select('online_orders.*', 'order_details.*')
+        //   ->where($date, Carbon::today()->toDateString())
+        //   ->where( function($query) {
+        //     $query->where('online_orders.order_status', 'On order')
+        //     ->orWhere('online_orders.order_status', 'Canceled')
+        //     ->orWhere('online_orders.order_status', 'Delivered');
+        //   })
+        //   ->get(['preferred_delivery_date']);
+      // }
+    
+
     $data = DB::table('online_orders')
     ->join('order_details', 'order_details.order_id', '=', 'online_orders.order_id')
     ->select('online_orders.*', 'order_details.*')
@@ -292,8 +308,7 @@ public function fetchDelivery(Request $request){
       ->orWhere('online_orders.order_status', 'Canceled')
       ->orWhere('online_orders.order_status', 'Delivered');
     })
-    ->get();
-    
+    ->get(['preferred_delivery_date']);
     $arr = array();
     foreach($data as $key){
       $order_details = DB::table('products')
@@ -524,6 +539,8 @@ public function fetchDelivery(Request $request){
     public function postOrder(Request $request){
       try {
         $data = $request->all();
+        
+          $date = Carbon::parse($data['preferred_delivery_date'])->format('Y-m-d');
           $post = new OnlineOrders;
           $post->receiver_name = $data['receiver_name'];
           $post->order_id = $data['order_id'];
@@ -534,7 +551,7 @@ public function fetchDelivery(Request $request){
           $post->city_or_municipality = $data['city_or_municipality'];
           $post->province = $data['province'];
           $post->total_payment = $data['total_payment'];
-          $post->preferred_delivery_date = $data['preferred_delivery_date'];
+          $post->preferred_delivery_date = $date;
           $post->order_status = $data['order_status'];
           $post->landmark = $data['landmark'];
           $post->payment_method = $data['payment_method'];
