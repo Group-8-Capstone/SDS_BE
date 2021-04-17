@@ -204,13 +204,12 @@ class OrderController extends Controller
     public function fetchPendingOrder()
     {
       try {
-        return new OrderCollection(Order::where('order_status', 'Pending')
+        return new OrderCollection(OnlineOrders::where('order_status', 'Pending')
         ->orderBy('preferred_delivery_date', 'asc')
         ->get());
       } catch (\Exception $e) {
         return response()->json(['error'=>$e->getMessage()]);
       }
-      
     }
 
     public function fetchDelivered()
@@ -500,61 +499,117 @@ public function fetchDelivery(Request $request){
 
     //New
 
-    public function postOrder(Request $request){
-      try {
-        $data = $request->all();
+    // public function postOrder(Request $request){
+    //   try {
+    //     $data = $request->all();
 
-          $date = Carbon::parse($data['preferred_delivery_date'])->format('Y-m-d');
-          $post = new OnlineOrders;
-          $post->receiver_name = $data['receiver_name'];
-          $post->order_id = $data['order_id'];
-          $post->contact_number = $data['contact_number'];
-          $post->email = $data['email'];
-          $post->building_or_street = $data['building_or_street'];
-          $post->barangay = $data['barangay'];
-          $post->city_or_municipality = $data['city_or_municipality'];
-          $post->province = $data['province'];
-          $post->total_payment = $data['total_payment'];
-          $post->preferred_delivery_date = $date;
-          $post->order_status = $data['order_status'];
-          $post->landmark = $data['landmark'];
-          $post->payment_method = $data['payment_method'];
-          $post->payment_status = $data['payment_status'];
+    //       $date = Carbon::parse($data['preferred_delivery_date'])->format('Y-m-d');
+    //       $post = new OnlineOrders;
+    //       $post->receiver_name = $data['receiver_name'];
+    //       $post->order_id = $data['order_id'];
+    //       $post->contact_number = $data['contact_number'];
+    //       $post->email = $data['email'];
+    //       $post->building_or_street = $data['building_or_street'];
+    //       $post->barangay = $data['barangay'];
+    //       $post->city_or_municipality = $data['city_or_municipality'];
+    //       $post->province = $data['province'];
+    //       $post->total_payment = $data['total_payment'];
+    //       $post->preferred_delivery_date = $date;
+    //       $post->order_status = $data['order_status'];
+    //       $post->landmark = $data['landmark'];
+    //       $post->payment_method = $data['payment_method'];
+    //       $post->payment_status = $data['payment_status'];
 
-          $isExist = OnlineOrders::where('order_id', '=', $data['order_id'])->first();
-          if ($isExist === null) {
-            $post->save();
-          }
+    //       $isExist = OnlineOrders::where('order_id', '=', $data['order_id'])->first();
+    //       if ($isExist === null) {
+    //         $post->save();
+    //       }
 
-          return 'success';
-      } catch (Exception $e){
-        return response()->json(['error: ' => $e->getMessage()]);
-      }
-    }
+    //       return 'success';
+    //   } catch (Exception $e){
+    //     return response()->json(['error: ' => $e->getMessage()]);
+    //   }
+    // }
 
-    public function saveOrderDetails(Request $request){
-      try {
-        $data = $request->all();
+    // public function saveOrderDetails(Request $request){
+    //   try {
+    //     $data = $request->all();
 
-          $productID = DB::table('products')
-          ->where('product_name', $data['product_name'])
-          ->value('id');
+    //       $productID = DB::table('products')
+    //       ->where('product_name', $data['product_name'])
+    //       ->value('id');
 
-          $customerID = DB::table('online_orders')
-          ->where('order_id', $data['order_id'])
-          ->value('id');
+    //       $customerID = DB::table('online_orders')
+    //       ->where('order_id', $data['order_id'])
+    //       ->value('id');
 
-          $order = OnlineOrders::find($data['order_id']);
-          $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$data['order_quantity']]]);
+    //       $order = OnlineOrders::find($data['order_id']);
+    //       $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$data['order_quantity']]]);
 
-          return 'success';
-      } catch(Exception $e) {
-        return response()->json(['error: ' => $e->getMessage()]);
-      }
-    }
+    //       return 'success';
+    //   } catch(Exception $e) {
+    //     return response()->json(['error: ' => $e->getMessage()]);
+    //   }
+    // }
 
     public function fetchOrders(){
       return OnlineOrders::with('products')->get();
     }
+
+
+    //-----------------------JUST TRY-----------------------------
+
+    public function postOrder(Request $request){
+        try {
+          $data = $request->all();
+          foreach ($data as $key) {
+            // return $key;
+            foreach($key['meta_data'] as $i) { 
+              if($i['key'] == "_preferred_delivery_date"){
+                $delivery_date = $i['value'];
+                $first_name = $key['billing']['first_name'];
+                $last_name = $key['billing']['last_name'];
+                $date = Carbon::parse($delivery_date)->format('Y-m-d');
+                $post = new OnlineOrders;
+                $post->receiver_name = $first_name.' '.$last_name;
+                $post->order_id = $key['id'];
+                $post->contact_number = $key['billing']['phone'];
+                $post->email = $key['billing']['email'];
+                $post->building_or_street = $key['billing']['address_2'];
+                $post->barangay = $key['billing']['address_1'];
+                $post->city_or_municipality = $key['billing']['city'];
+                $post->province = $key['billing']['postcode'];
+                $post->total_payment = $key['total'];
+                $post->preferred_delivery_date = $date;
+                $post->order_status = 'On order';
+                $post->landmark = $key['billing']['company'];
+                $post->payment_method = $key['payment_method'];
+                $post->payment_status = $key['status'];
+      
+                $isExist = OnlineOrders::where('order_id', '=', $key['id'])->first();
+                if ($isExist === null) {
+                  $post->save();
+                }
+                foreach($key['line_items'] as $prod){
+                  // return $prod;
+                  $productID = DB::table('products')
+                  ->where('product_name', $prod['name'])
+                  ->value('id');
+
+                  $customerID = DB::table('online_orders')
+                  ->where('order_id', $key['id'])
+                  ->value('id');
+
+                  $order = OnlineOrders::find($key['id']);
+                  $order->products()->syncWithoutDetaching([$productID=>['customer_id'=>$customerID, 'order_quantity'=>$prod['quantity']]]);
+                }
+              }
+            }
+          }
+            return 'success';
+        } catch (Exception $e){
+          return response()->json(['error: ' => $e->getMessage()]);
+        }
+      }
    
 }
